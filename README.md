@@ -1,7 +1,7 @@
 # Ex-1-Developing-AI-Agent-with-PEAS-Description
-### Name:
+### Name: Balaji SK
 
-### Register Number:
+### Register Number:2305003001
 
 ### Aim:
 To find the PEAS description for the given AI problem and develop an AI agent.
@@ -35,87 +35,140 @@ It’s a framework used to define the task environment for an AI agent clearly.
 5. Personal assistant (like Siri or Alexa)
 ```
 
-### VacuumCleanerAgent
+### Chess playing agent
 ### Algorithm:
-Step 1: Initialize:
+Algorithm:
 
-Set agent’s location to A
+Step 1: Initialize
 
-Set environment dirt status for locations A and B (True = dirty, False = clean)
+Set up chess board in starting position.
 
-Step 2 :Repeat until all locations are clean (no dirt):
-a. Sense if current location has dirt
-b. If current location has dirt:
-- Suck dirt (set dirt status at current location to False)
-c. Else:
-- If current location is A, move right to location B
-- Else if current location is B, move left to location A
-d. Print the agent’s current location and dirt status (optional for debugging)
+Set agent’s side (White or Black).
 
-Step 3: Stop when all locations are clean
+Define evaluation function (to measure how good a board position is).
 
-Step 4: Print total steps taken (optional)
+Set search depth (how many moves ahead to look).
+
+Step 2 : Game Loop (repeat until game ends) a. Sense/Perceive:
+
+Observe current board state.
+
+Generate all possible legal moves.
+
+b. Think/Decide:
+
+For each possible move:
+
+Simulate move on a copy of the board.
+
+Use Minimax with Alpha-Beta Pruning to explore opponent’s responses up to the chosen depth.
+
+Evaluate resulting positions using the evaluation function.
+
+Select the move with the best evaluation (maximize if agent’s turn, minimize if opponent’s).
+
+c. Act:
+
+Make the selected move on the real board.
+
+d. Print/Debug (optional):
+
+Show chosen move, current board state, and evaluation score.
+
+Step 3: Stop when game ends (Checkmate, Stalemate, or Draw).
+
+Step 4: Print result (Win, Lose, Draw).
+
+Print number of moves played.
 
 ### Program:
 ```
-class VacuumCleanerAgent:
-    def __init__(self):
-        # Initialize the agent's state (location and dirt status)
-        self.location = "A"  # Initial location (can be "A" or "B")
-        self.dirt_status = {"A": False, "B": False}  # Initial dirt status (False means no dirt)
+import random
 
-    def move_left(self):
-        # Move the agent to the left if possible
-        if self.location == "B":
-            self.location = "A"
+# Starting chess board
+board = [
+    ["r","n","b","q","k","b","n","r"],
+    ["p","p","p","p","p","p","p","p"],
+    [".",".",".",".",".",".",".","."],
+    [".",".",".",".",".",".",".","."],
+    [".",".",".",".",".",".",".","."],
+    [".",".",".",".",".",".",".","."],
+    ["P","P","P","P","P","P","P","P"],
+    ["R","N","B","Q","K","B","N","R"]
+]
 
-    def move_right(self):
-        # Move the agent to the right if possible
-        if self.location == "A":
-            self.location = "B"
+def print_board():
+    print("   a b c d e f g h")
+    for i, row in enumerate(board):
+        print(f"{8-i}  " + " ".join(row))
+    print()
 
-    def suck_dirt(self):
-        # Suck dirt in the current location if there is dirt
-        if self.dirt_status[self.location]:
-            self.dirt_status[self.location] = False
-            print(f"Sucked dirt in location {self.location}")
+def notation_to_pos(move):
+    col_map = "abcdefgh"
+    return 8-int(move[1]), col_map.index(move[0])
 
-    def do_nothing(self):
-        # Do nothing
-        pass
+def pos_to_notation(pos):
+    row,col = pos
+    col_map = "abcdefgh"
+    return f"{col_map[col]}{8-row}"
 
-    def perform_action(self, action):
-        # Perform the specified action
-        if action == "left":
-            self.move_left()
-        elif action == "right":
-            self.move_right()
-        elif action == "suck":
-            self.suck_dirt()
-        elif action == "nothing":
-            self.do_nothing()
+def get_moves(is_white):
+    moves = []
+    for r in range(8):
+        for c in range(8):
+            piece = board[r][c]
+            if piece == ".": 
+                continue
+            if is_white and piece.isupper() or (not is_white and piece.islower()):
+                for rr in range(8):
+                    for cc in range(8):
+                        if (rr,cc)!=(r,c) and board[rr][cc]=="." or (is_white and board[rr][cc].islower()) or (not is_white and board[rr][cc].isupper()):
+                            moves.append(((r,c),(rr,cc)))
+    return moves
+
+def make_move(start,end):
+    r1,c1=start; r2,c2=end
+    board[r2][c2]=board[r1][c1]
+    board[r1][c1]="."
+
+def game():
+    white_turn=True
+    print_board()
+    while True:
+        flat=sum(board,[])
+        if "K" not in flat:
+            print("Black wins! King captured.")
+            break
+        if "k" not in flat:
+            print("White wins! King captured.")
+            break
+
+        if white_turn:
+            move=input("Your move (e.g., e2 e4): ").split()
+            try:
+                start=notation_to_pos(move[0]); end=notation_to_pos(move[1])
+                make_move(start,end)
+            except:
+                print("Invalid input, try again."); continue
         else:
-            print("Invalid action")
+            moves=get_moves(False)
+            if not moves: 
+                print("Stalemate!"); break
+            start,end=random.choice(moves)
+            make_move(start,end)
+            print(f"AI plays {pos_to_notation(start)} {pos_to_notation(end)}")
 
-    def print_status(self):
-        # Print the current status of the agent
-        print(f"Location: {self.location}, Dirt Status: {self.dirt_status}")
+        print_board()
+        white_turn=not white_turn
 
-# Example usage:
-agent = VacuumCleanerAgent()
-
-
-# Move the agent, suck dirt, and do nothing
-
-agent.perform_action("left")
-agent.print_status()
-agent.perform_action("suck")
-agent.print_status()
-agent.perform_action("nothing")
-agent.print_status()
+game()
 ```
 ### Sample Output:
+<img width="331" height="349" alt="Screenshot 2025-09-22 132342" src="https://github.com/user-attachments/assets/70c3de90-0738-4622-be1d-ff04e5151f4a" />
+<img width="332" height="580" alt="Screenshot 2025-09-22 132456" src="https://github.com/user-attachments/assets/7ab6b8ff-1973-4da3-9753-f783150d6052" />
 
-425810495-d1198ba7-da19-413b-9907-4844afae627f
+
+
 
 ### Result:
+This program is 
